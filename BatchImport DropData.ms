@@ -2,7 +2,7 @@
 [INFO]
 
 NAME = Batch Import DropData
-VERSION = 3.0.0
+VERSION = 3.0.1
 AUTHOR = MastaMan
 DEV = SightLine Vision
 HELP = 
