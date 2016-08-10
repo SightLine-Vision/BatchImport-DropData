@@ -25,11 +25,13 @@ HELP =
 	* Code optimization=
 	* Bug fixes=
 	* Adopt for new Scripts Launcher=
-		
+[3.0.1]		
+	+Added: Support *.dae type=
+	* Find files in all directories and root directory=
 	
 [ABOUT]
 
-		- Import all *.3DS data from subfolder=
+		- Import all *.3DS/*.dae data from subfolder=
 		- Set full path for bitmaps=
 		- Attach all parts in to one mesh=
 		- Split result to several files=
@@ -45,7 +47,7 @@ HELP =
 [SCRIPT]
 */
 
-
+fileTypes = #("*.3DS", "*.dae")
 
 
 fn getScriptInfo s releaseInfo: "" =
@@ -363,7 +365,7 @@ rollout BatchImport "Batch Import DropData" width:170 height:259
 		)
 		if(chkWeldAndSmooth.checked == true) do addWeldAndSmooth()
 				
-		saveNodes geometry szFileName saveAsVersion:2012 quiet:true
+		saveNodes geometry szFileName quiet:true
 			
 		append szParts szFileName
 	)
@@ -407,12 +409,14 @@ rollout BatchImport "Batch Import DropData" width:170 height:259
 		)
 		
 		szDirectories = GetDirectories (szFolder + "\*")
+		append szDirectories szFolder
 		
+		/*
 		if(szDirectories[1] == undefined or szDirectories[1] == "") do 
 		(
 			MessageBox "Subfolder not found!"
 			return 0
-		)
+		)*/
 		
 		try(resetMaxFile #noPrompt)catch(resetMaxFile)
 		
@@ -441,15 +445,28 @@ rollout BatchImport "Batch Import DropData" width:170 height:259
 		useSettings "CHECBOX" "SHOWTEXTURESVIEWPORT" x 1
 		showTexturesViewport x
 	)
+	
+	fn getFilesByType d = 
+	(
+		o = #()
+		for t in fileTypes do
+		(
+			f = getFiles(d + @"\" + t)
+			join o f
+		)
 		
+		return o
+	)
+	
 	on tmrTimer tick do
 	(
 		tmrTimer.active = false
 		tmrTimer.interval = 1000
 		
 		iCnt += 1
-			
-		szFiles = getFiles(szDirectories[iCnt] + "\*.3DS")
+		
+		szFiles = getFilesByType szDirectories[iCnt]	
+				
 		iCnt2 += szFiles.count
 					
 		for i in szFiles where i != undefined do
@@ -465,6 +482,8 @@ rollout BatchImport "Batch Import DropData" width:170 height:259
 			catch(importFile i #noPrompt)
 						
 			optimizeIDCount  selection
+			s = selection[1]
+			if(s != undefined) do s.name = timeStamp() as string
 			
 			if(MatIDCnt >= MatIDOverflowCnt) do
 			(
@@ -482,6 +501,7 @@ rollout BatchImport "Batch Import DropData" width:170 height:259
 				
 		pbStatus.value = ((iCnt as float) / (szDirectories.count as float)) * 100.0
 		
+		
 		if(pbStatus.value >= 100.0) then
 		(
 			processAndSave()
@@ -496,7 +516,7 @@ rollout BatchImport "Batch Import DropData" width:170 height:259
 					deleteFile u
 				)
 				
-				saveMaxFile (szFolder + "\\" + edtName.text) saveAsVersion:2012 quiet:true				
+				saveMaxFile (szFolder + "\\" + edtName.text) quiet:true				
 			)
 							
 			btnBrowse.caption = "Browse"
